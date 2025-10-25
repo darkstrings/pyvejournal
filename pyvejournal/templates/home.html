@@ -1,0 +1,51 @@
+<!-- HOME PAGE -->
+ 
+<!-- prettier-ignore-start -->
+{% extends "layout.html" %}
+{% block content %}
+{% for post in posts.items %}
+<!-- prettier-ignore-end -->
+
+<!-- .items is because it's a pagination object -->
+<article class="content-section d-flex">
+  <img class="rounded-circle article-img"
+    src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}">
+  <div class="w-100">
+    <div class="article-metadata">
+      <a class="me-2" href="{{url_for('users.user_posts', username = post.author.username)}}">{{ post.author.username }}</a>
+      <small class="text-muted">{{ post.date_posted.strftime("%Y-%m-%d") }}</small>
+    </div>
+    <h2><a class="article-title" href="{{url_for('posts.post', post_id=post.id)}}">{{ post.title }}</a></h2>
+    <p class="article-content">{{ post.content }}</p>
+    </div>
+</article>
+<!-- prettier-ignore-start -->
+{% endfor %}
+
+<!-- PAGINATION -->
+
+{% for page_num in posts.iter_pages(left_edge = 1, right_edge = 1, left_current = 2, right_current = 2) %}
+  {% if page_num %}
+    {% if posts.page == page_num %}
+    <a class="btn btn-info mb-4" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
+    {% else %}
+    <a class="btn btn-outline-info mb-4" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
+    {% endif %}
+  {% else %}  
+    <span class="btn btn-outline-secondary mb-4 disabled">…</span>
+  {% endif %}
+{% endfor %}
+
+<!-- 
+inter_pages() parameters
+
+- Left edge = always show the first few pages (e.g. 1, 2)
+- Right edge = always show the last few pages (e.g. 9, 10)
+- Left current = show this many pages before the current page
+- Right current = show this many pages after the current page
+
+
+ -->
+
+{% endblock content %}
+<!-- prettier-ignore-end -->

@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env
+venv/
+instance/
+*.sqlite3
+
+# Flask
+*.log
+*.db
+*.bak
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+notes.py
+init_db.py
+seed_data.json
+run.py
+
+
+# Compiled/static assets
+static/css/*.map
+static/js/*.map
+__pycache__/
+*.py[cod]

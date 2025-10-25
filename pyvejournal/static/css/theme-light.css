@@ -1,0 +1,123 @@
+/* LIGHT THEME */
+
+body {
+  background: #f4f4f4;
+  color: #2c2c2c;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #333333;
+}
+
+a {
+  color: #007acc;
+}
+
+a:hover {
+  color: #005999;
+}
+
+/* top bar bg */
+.bg-steel {
+  background-color: #3a3f44;
+}
+
+.site-header .navbar-nav .nav-link {
+  color: #d0d0d0;
+}
+
+.site-header .navbar-nav .nav-link:hover {
+  color: #ffffff;
+}
+
+.site-header .navbar-nav .nav-link.active {
+  color: #007acc;
+}
+
+/* THEME DROPDOWN */
+
+.dropdown-toggle {
+  background-color: #e0e0e0;
+  border-color: #007acc;
+  box-shadow: none;
+}
+
+.dropdown-menu {
+  background-color: #e0e0e0;
+}
+
+.dropdown-menu::before,
+.dropdown-menu::after {
+  background-color: transparent;
+  border: none;
+}
+
+.dropdown-toggle {
+  color: #2c2c2c;
+}
+
+.dropdown-toggle:hover {
+  background-color: #007acc;
+  color: #e0e0e0;
+}
+
+.dropdown-toggle:active, .dropdown-toggle:focus {
+  background-color:#005999;
+  border-color: #005999;
+  color: #e0e0e0;
+}
+
+.dropdown-item {
+  background-color: #e0e0e0;
+  color: #2c2c2c;
+}
+
+.dropdown-menu,
+.dropdown-item {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: #cce6ff;
+  color: #2c2c2c;
+}
+
+
+.content-section {
+  background: #ffffff;
+  border-color: #cccccc;
+}
+
+.article-title {
+  color: #333333;
+}
+
+a.article-title:hover {
+  color: #007acc;
+}
+
+.article-img {
+  border-color: #007acc;
+  box-shadow: #cccccc;
+}
+
+.article-metadata {
+  border-bottom-color: #cccccc;
+}
+
+.article-metadata a:hover {
+  color: #2c2c2c;
+}
+
+.list-group-item-light {
+  background-color: #ffffff !important;
+  color: #2c2c2c !important;
+  border-color: #007acc !important;
+}
+
+.sidebar-item {
+  background-color: #0f3460;
+  color: #f8f8f2;
+  border-color: #08d9d6;
+}

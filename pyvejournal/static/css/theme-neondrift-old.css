@@ -1,0 +1,77 @@
+body {
+  background: #1a1a2e;
+  color: #f8f8f2;
+  margin-top: 5rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #ff2e63;
+}
+
+a {
+  color: #08d9d6;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #ff2e63;
+}
+
+/* top bar bg */
+.bg-steel {
+  background-color: #16213e;
+}
+
+.site-header .navbar-nav .nav-link {
+  color: #e0e0e0;
+}
+
+.site-header .navbar-nav .nav-link:hover {
+  color: #ff2e63;
+}
+
+.site-header .navbar-nav .nav-link.active {
+  font-weight: 500;
+  color: #ff2e63;
+}
+
+.article-img {
+  height: 65px;
+  width: 65px;
+  margin-right: 16px;
+  border-radius: 8px;
+  border: 2px solid #ff2e63; /* neon pink frame */
+  box-shadow: 0 0 8px #08d9d6; /* electric teal glow */
+}
+
+
+.content-section {
+  background: #0f3460;
+  padding: 10px 20px;
+  border: 1px solid #444;
+  border-radius: 3px;
+  margin-bottom: 20px;
+}
+
+.article-title {
+  color: #ff2e63;
+}
+
+a.article-title:hover {
+  color: #08d9d6;
+}
+
+.article-content {
+  white-space: pre-line;
+}
+
+.article-metadata {
+  padding-bottom: 1px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #444;
+}
+
+.article-metadata a:hover {
+  color: #f8f8f2;
+  text-decoration: none;
+}

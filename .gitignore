@@ -26,6 +26,8 @@ notes.py
 init_db.py
 seed_data.json
 run.py
+view_db.py
+.prettierignore
 
 
 # Compiled/static assets

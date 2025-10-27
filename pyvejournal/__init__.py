@@ -5,7 +5,8 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from pyvejournal.config import Config
 from flask_login import current_user
-from flask_migrate import Migrate
+from flask_migrate import Migrate, upgrade
+from pyvejournal import db
 
 
 
@@ -32,6 +33,14 @@ def create_app(config_class=Config):
     bcrypt.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
+        # Auto-run migrations on startup (for platforms without shell access)
+    try:
+        with app.app_context():
+            upgrade()
+    except Exception as e:
+        print(f"Migration skipped or failed: {e}")
+
+    
 
     @app.context_processor
     def inject_theme():

@@ -7,6 +7,4 @@ class Config:
     MAIL_USERNAME = os.environ.get("PYVEJOURNAL_EMAIL_USER")  # "eagleaxe"
     MAIL_PASSWORD = os.environ.get("PYVEJOURNAL_EMAIL_PASS")  # 
     SECRET_KEY = os.environ.get("PYVEJOURNAL_SECRET_KEY") 
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///C:\\Users\darks\PycharmProjects\pyvejournal-project\\pyvejournal\\site.db'
-
-    # This is a local path that wont work deployed
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///site.db'

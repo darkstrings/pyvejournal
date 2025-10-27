@@ -5,12 +5,15 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from pyvejournal.config import Config
 from flask_login import current_user
+from flask_migrate import Migrate
+
 
 
 # forms is referring to forms.py and models is referring to models.py
 
 
 db = SQLAlchemy()
+migrate = Migrate()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
 login_manager.login_view = "users.login"
@@ -24,9 +27,8 @@ mail = Mail()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(Config)
-
-    
     db.init_app(app)
+    migrate.init_app(app, db)
     bcrypt.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)

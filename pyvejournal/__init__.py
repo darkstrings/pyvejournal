@@ -6,7 +6,7 @@ from flask_mail import Mail
 from pyvejournal.config import Config
 from flask_login import current_user
 from flask_migrate import Migrate, upgrade
-from pyvejournal import db
+
 
 
 

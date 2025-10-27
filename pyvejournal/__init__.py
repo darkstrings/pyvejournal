@@ -34,11 +34,11 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     mail.init_app(app)
         # Auto-run migrations on startup (for platforms without shell access)
-    try:
-        with app.app_context():
-            upgrade()
-    except Exception as e:
-        print(f"Migration skipped or failed: {e}")
+    # try:
+    #     with app.app_context():
+    #         upgrade()
+    # except Exception as e:
+    #     print(f"Migration skipped or failed: {e}")
 
     
 

@@ -7,4 +7,5 @@ class Config:
     MAIL_USERNAME = os.environ.get("PYVEJOURNAL_EMAIL_USER")  # "eagleaxe"
     MAIL_PASSWORD = os.environ.get("PYVEJOURNAL_EMAIL_PASS")  # 
     SECRET_KEY = os.environ.get("PYVEJOURNAL_SECRET_KEY") 
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///site.db'
+    SQLALCHEMY_DATABASE_URI = os.environ.get("PYVEJOURNAL_DATABASE_URL")
+    # SQLALCHEMY_DATABASE_URI = 'sqlite:///site.db'

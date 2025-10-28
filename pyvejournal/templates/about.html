@@ -1,4 +1,29 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h1>About</h1>
+<div class="container mt-4">
+    <h1 class="mb-3">About PyveJournal</h1>
+    <p class="lead">Welcome to <strong>PyveJournal</strong> — a clean, customizable space to write, reflect, and
+        document your journey.</p>
+
+    <p>Whether you're a developer logging your build process, a designer sketching ideas, or someone who just wants a
+        quiet place to think out loud, PyveJournal is built to feel personal. No ads, no clutter — just your words, your
+        themes, and your rhythm.</p>
+
+    <h3 class="mt-4">🧠 What makes PyveJournal different?</h3>
+    <ul>
+        <li><strong>Themeable and expressive</strong>: Choose a look that matches your mood. PyveJournal supports
+            multiple themes, with more on the way.</li>
+        <li><strong>Simple and secure</strong>: Built with Python and Flask, PyveJournal keeps things lightweight and
+            privacy-conscious.</li>
+        <li><strong>Crafted for clarity</strong>: Every detail — from layout to typography — is designed to make writing
+            feel good.</li>
+    </ul>
+
+    <h3 class="mt-4">🛠️ Built for creators</h3>
+    <p>PyveJournal was made by someone who treats code like craft. It’s designed to be modular, maintainable, and
+        expressive — so the tool never gets in the way of your thoughts.</p>
+
+    <p class="mt-4">Ready to start journaling? <a href="{{ url_for('users.register') }}">Create an account</a> or
+        explore the demo posts to see how it feels.</p>
+</div>
 {% endblock content %}

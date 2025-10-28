@@ -18,12 +18,17 @@ a:hover {
   color: #ff2e63;
 }
 
+.post-date{
+  color: #ff2e63;
+}
+
 /* top bar bg */
 .sidebar-item {
   background-color: #0f3460;
   color: #f8f8f2;
   border-color: #08d9d6;
 }
+
 
 
 

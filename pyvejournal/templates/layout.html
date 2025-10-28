@@ -5,6 +5,8 @@
   <!-- metas -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
 
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -16,7 +18,7 @@
   <!-- <link id="themeStylesheet" rel="stylesheet" href="../static/css/theme-neondrift-old.css"> -->
 
   <!-- Title logic -->
-
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   {% if title %}
   <title>PyveJournal - {{title}}</title>
   {% else %}

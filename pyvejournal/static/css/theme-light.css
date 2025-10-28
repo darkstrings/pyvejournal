@@ -17,6 +17,10 @@ a:hover {
   color: #005999;
 }
 
+.post-date{
+  color: #333333;
+}
+
 /* top bar bg */
 .bg-steel {
   background-color: #3a3f44;

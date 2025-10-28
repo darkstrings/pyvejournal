@@ -1,0 +1,41 @@
+{
+  "users": [
+    {
+      "username": "johndoe",
+      "email": "johndoe@example.com",
+      "password": "password123",
+      "theme": "theme-signalforge"
+    },
+    {
+      "username": "janedoe",
+      "email": "janedoe@example.com",
+      "password": "securepass",
+      "theme": "theme-neondrift"
+    },
+    {
+      "username": "alexsmith",
+      "email": "alexsmith@example.com",
+      "password": "letmein456",
+      "theme": "theme-light"
+    }
+  ],
+  "posts": [
+    { "title": "Getting Started", "content": "Here's how to begin your journey.", "author": "johndoe" },
+    { "title": "Flask Tips", "content": "Use blueprints to keep things modular.", "author": "johndoe" },
+    { "title": "Debugging 101", "content": "Print statements are your best friend.", "author": "johndoe" },
+    { "title": "Pagination Demo", "content": "This post helps test pagination.", "author": "johndoe" },
+    { "title": "Database Reset", "content": "Drop and recreate your tables safely.", "author": "johndoe" },
+
+    { "title": "Welcome to the Blog", "content": "Glad you're here!", "author": "janedoe" },
+    { "title": "Styling with Bootstrap", "content": "Use cards and containers for layout.", "author": "janedoe" },
+    { "title": "Forms in Flask", "content": "WTForms makes validation easy.", "author": "janedoe" },
+    { "title": "User Authentication", "content": "LoginManager is your friend.", "author": "janedoe" },
+    { "title": "Mail Setup", "content": "Use app passwords with Gmail.", "author": "janedoe" },
+
+    { "title": "Seed Script Magic", "content": "Automate your test data.", "author": "alexsmith" },
+    { "title": "Model Relationships", "content": "Use backref for easy access.", "author": "alexsmith" },
+    { "title": "Blueprint Breakdown", "content": "Separate concerns cleanly.", "author": "alexsmith" },
+    { "title": "Error Handling", "content": "Custom error pages improve UX.", "author": "alexsmith" },
+    { "title": "Final Thoughts", "content": "Keep your code clean and readable.", "author": "alexsmith" }
+  ]
+}

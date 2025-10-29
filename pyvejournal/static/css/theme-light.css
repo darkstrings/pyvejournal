@@ -125,3 +125,6 @@ a.article-title:hover {
   color: #f8f8f2;
   border-color: #08d9d6;
 }
+.dropdown-toggle:active, .dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.25rem rgba(173, 159, 159, 0.5);
+}

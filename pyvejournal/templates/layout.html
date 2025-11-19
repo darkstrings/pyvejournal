@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
+{% set theme_name = current_user.theme if current_user.is_authenticated else request.cookies.get('theme', 'theme-neondrift')
+%}
 
 <head>
   <!-- metas -->
@@ -13,7 +15,8 @@
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/' + theme + '.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/' + theme_name + '.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/' + theme_name + '.css') }}?v={{ time|default(1) }}">
 
   <!-- <link id="themeStylesheet" rel="stylesheet" href="../static/css/theme-neondrift-old.css"> -->
 

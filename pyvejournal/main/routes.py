@@ -9,6 +9,7 @@ main = Blueprint('main', __name__)
 def home():
     post_count = Post.query.all().__len__()
     user_post_count = 0
+    
     if current_user.is_authenticated:
         user_post_count = Post.query.filter_by(author=current_user).count()
     page = request.args.get("page", 1, type = int)

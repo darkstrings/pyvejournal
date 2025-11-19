@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-{% set theme_name = current_user.theme if current_user.is_authenticated else request.cookies.get('theme', 'theme-neondrift')
+{% set theme_name = current_user.theme if current_user.is_authenticated else request.cookies.get('theme', 'theme-light')
 %}
 
 <head>

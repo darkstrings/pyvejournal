@@ -49,7 +49,14 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username = form.username.data, email = form.email.data, password = hashed_password)
+        theme_cookie = request.cookies.get("theme")
+        user_theme = theme_cookie or "theme-light"
+        user = User(
+            username = form.username.data, 
+            email = form.email.data, 
+            password = hashed_password, 
+            theme = user_theme
+            )
         db.session.add(user)
         db.session.commit()
         flash(f"Thank you for registering, {user.username}! You can now log in.","success")

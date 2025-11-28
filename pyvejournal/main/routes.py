@@ -16,7 +16,7 @@ def home():
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page = page, per_page = 5)
     print(post_count)
     # The method order_by(Post.date_posted.desc()) is how we put the latest post on top. (desc means descending) then we just chain paginate() to it
-    return render_template("home.html", posts = posts, post_count=post_count, user_post_count=user_post_count)
+    return render_template("home.html", posts = posts)
 
 @main.route("/about")
 def about():

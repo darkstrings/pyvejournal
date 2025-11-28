@@ -1,14 +1,12 @@
 from datetime import datetime
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from flask import current_app 
-from pyvejournal import db, login_manager
+from . import db
+from flask_login import UserMixin
+from pyvejournal.extensions import db
 from flask_login import UserMixin
 
-@login_manager.user_loader
-def load_user(user_id):
-    # return db.session.get(User, int(user_id))
-    return User.query.get(int(user_id))
-# The above line is needed for flask-login to work. It tells flask-login how to load the user object from the user ID stored in the session.
+
 
 class User(db.Model, UserMixin):
     # These are all columns in the table
@@ -20,7 +18,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(60), nullable=False)
     # the image file and password are hashed to exactly 60 chars
     posts = db.relationship('Post', backref='author', lazy=True)
-    theme = db.Column(db.String(20), nullable=False, default='theme-default')
+    theme = db.Column(db.String(20), nullable=False)
 
     def get_reset_token(self):
         

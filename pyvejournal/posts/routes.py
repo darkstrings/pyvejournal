@@ -3,6 +3,7 @@ from pyvejournal import db
 from pyvejournal.posts.forms import PostForm
 from pyvejournal.models import Post
 from flask_login import current_user, login_required
+import bleach
 
 
 posts = Blueprint('posts', __name__)
@@ -14,12 +15,19 @@ posts = Blueprint('posts', __name__)
 def new_post():
     form = PostForm()
     if form.validate_on_submit():
-        post = Post(title = form.title.data, content = form.content.data, author = current_user)
+        clean_body = bleach.clean(
+            form.content.data,
+            tags=[],
+            attributes={'*': ['style']},
+            strip=True
+        )
+
+        post = Post(title = form.title.data, content = clean_body, author = current_user)
         db.session.add(post)
         db.session.commit()
         flash("Your Post Is Posted!", "success")
         return redirect(url_for("main.home"))
-    return render_template("create_post.html", title = "New Post", form = form, legend = "New Post", post_count=post_count, user_post_count=user_post_count)
+    return render_template("create_post.html", title = "New Post", form = form, legend = "New Post", posts = posts)
 
 @posts.route("/post/<int:post_id>")
 def post(post_id):

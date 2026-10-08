@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import entry_list, pager with context %}
+{% block content %}
+  <h1 class="pagetitle">Entries tagged “{{ tag }}”</h1>
+  {{ entry_list(posts, empty="No entries with that tag yet.") }}
+  {{ pager(posts, 'main.tag', name=tag) }}
+{% endblock %}
+{% block sidebar %}
+  <section class="box"><h2 class="box__title">Tags</h2><p class="box__text">Tags help people find entries about the same thing. Add them when you post.</p>
+  <a class="btn btn--block btn--ghost" href="{{ url_for('main.home') }}">← All latest entries</a></section>
+{% endblock %}

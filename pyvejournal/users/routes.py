@@ -1,165 +1,280 @@
-from flask import jsonify, make_response, render_template, url_for, flash, redirect, request, Blueprint
-from flask_login import login_user, current_user, logout_user, login_required
-from pyvejournal import db, bcrypt
-from pyvejournal.models import User, Post
-from pyvejournal.users.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
-                                   RequestResetForm, ResetPasswordForm)
-from pyvejournal.users.utils import save_picture, send_reset_email
-users = Blueprint('users', __name__)
+from urllib.parse import urlsplit
 
-VALID_THEMES = ['theme-default', 'theme-signalforge', 'theme-neondrift']
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from flask_login import current_user, login_required, login_user, logout_user
+from sqlalchemy import func, select
 
-# ACCOUNT INFO
-# As of right now, there's no way to change either of these values individually....You have to change both.
-# This is because we're using the same validators as when you make a new account. The validator we need here needs to yes, check to not use something taken by another user but keep the user or email if it's their own. If you're logged in with that, you can keep it.
-@users.route("/account", methods = ["GET", "POST"])
-@login_required
-# login_required makes sure that you're logged in before even accessing the page. It's also initialized in __init__
-def account():
-    form = UpdateAccountForm()
-    if form.validate_on_submit():
-        if form.picture.data:
-            # call the save_picture function above and save its return to a var
-            picture_file = save_picture(form.picture.data)
-            # take that return and use it to set the new image in the DB
-            current_user.image_file = picture_file
+from ..extensions import db, limiter
+from ..models import DEFAULT_THEME, THEMES, User, Userpic, normalize_theme
+from .forms import (
+    LoginForm,
+    PasswordForm,
+    ProfileForm,
+    RegistrationForm,
+    RequestResetForm,
+    ResetPasswordForm,
+    UserpicForm,
+)
+from .utils import ImageError, process_userpic, send_reset_email
 
-        current_user.username = form.username.data
-        current_user.email = form.email.data
-        db.session.commit()
-        flash("Update Successful", "success")
-        return redirect(url_for("users.account"))
-    elif request.method == "GET":
-        form.username.data = current_user.username
-        form.email.data = current_user.email
+users = Blueprint("users", __name__)
 
-    # image_file = url_for("static", filename ="profile_pics/" + "current_user.image_file")
-    image_file = url_for("static", filename  = f"profile_pics/{current_user.image_file}")
-    return render_template("account.html", 
-                           title = "Account", 
-                           image_file = image_file, 
-                           form = form
-                           )
+DEMO_LOCKED = "The demo account can't change its settings — create your own journal to try this."
 
 
-@users.route("/register", methods = ["GET", "POST"])
+def safe_next(target: str | None) -> str | None:
+    """Only follow ?next= to paths on this site (prevents open redirects)."""
+    if not target:
+        return None
+    parts = urlsplit(target)
+    if parts.scheme or parts.netloc or not target.startswith("/") or target.startswith("//"):
+        return None
+    return target
+
+
+@users.route("/register", methods=["GET", "POST"])
+@limiter.limit("10/hour", methods=["POST"])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("main.home"))
     form = RegistrationForm()
     if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        theme_cookie = request.cookies.get("theme")
-        user_theme = theme_cookie or "theme-light"
         user = User(
-            username = form.username.data, 
-            email = form.email.data, 
-            password = hashed_password, 
-            theme = user_theme
-            )
+            username=form.username.data.strip(),
+            email=form.email.data.strip().lower(),
+            theme=normalize_theme(request.cookies.get("theme", DEFAULT_THEME)),
+        )
+        user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash(f"Thank you for registering, {user.username}! You can now log in.","success")
-        return redirect(url_for("users.login"))
-    return render_template("register.html", title = "Register", form = form)
+        login_user(user)
+        flash(f"Welcome to PyveJournal, {user.username}! Your journal is ready — write your first entry.", "success")
+        return redirect(url_for("posts.new_post"))
+    return render_template("users/register.html", title="Create a journal", form=form)
 
-@users.route("/login" , methods = ["GET", "POST"])
+
+@users.route("/login", methods=["GET", "POST"])
+@limiter.limit("10/minute;50/hour", methods=["POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("main.home"))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email = form.email.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
-            login_user(user, remember = form.remember.data)
-            next_page = request.args.get("next")
-            flash("Logged in successfully","info")
-            # there's a parameter when you try to go to a page when you're not logged into.
-            # next_page will contain it so that when you do log in, it'll take you there instead of home if next_page is Truthy....it exists...etc.
-            return redirect("account") if next_page else redirect(url_for("main.home"))
-            # ternary: |do stuff| |conditional| |otherwise do this instead|
-        else:
-            flash("Login failed. Please check for typos etc.","danger")
-    return render_template("login.html", title = "Log in", form = form)
+        user = db.session.scalar(select(User).where(func.lower(User.email) == form.email.data.strip().lower()))
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember.data)
+            flash(f"Welcome back, {user.name}!", "success")
+            return redirect(safe_next(request.args.get("next")) or url_for("journal.friends_page", username=user.username))
+        flash("That email and password don't match.", "danger")
+    return render_template("users/login.html", title="Log in", form=form)
 
-@users.route("/logout")
+
+@users.route("/demo", methods=["POST"])
+@limiter.limit("30/hour")
+def demo_login():
+    if not current_app.config.get("DEMO_ENABLED"):
+        abort(404)
+    user = db.session.scalar(select(User).where(User.is_demo.is_(True)))
+    if not user:
+        flash("The demo account isn't set up on this server.", "warning")
+        return redirect(url_for("users.login"))
+    login_user(user)
+    flash("You're in the demo journal. Anything you write disappears after a couple of hours.", "info")
+    return redirect(url_for("journal.friends_page", username=user.username))
+
+
+@users.route("/logout", methods=["POST"])
 def logout():
     logout_user()
-    flash("Logout Successful.","success")
+    flash("You're logged out. See you soon!", "success")
     return redirect(url_for("main.home"))
 
 
-@users.route("/user/<string:username>")
-def user_posts(username):
-    page = request.args.get("page", 1, type = int)
-    user = User.query.filter_by(username = username).first_or_404()
-    posts = Post.query\
-        .filter_by(author = user)\
-        .order_by(Post.date_posted.desc())\
-        .paginate(page = page, per_page = 5)
-    return render_template("user_posts.html", posts = posts, user = user)
-# the \ lets you start a new line if the line has lots of chaining and gets long. 
+@users.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    form = ProfileForm(obj=current_user)
+    if request.method == "GET":
+        form.theme.data = current_user.style
+    pw_form = PasswordForm(prefix="pw")
+    if form.submit.data and form.validate_on_submit():
+        if current_user.is_demo and (
+            form.username.data != current_user.username or form.email.data.lower() != current_user.email
+        ):
+            flash(DEMO_LOCKED, "warning")
+            return redirect(url_for("users.settings"))
+        form.populate_obj(current_user)
+        current_user.email = current_user.email.strip().lower()
+        db.session.commit()
+        flash("Profile saved.", "success")
+        return redirect(url_for("users.settings"))
+    return render_template("users/settings.html", title="Settings", form=form, pw_form=pw_form)
 
-# user enters their email to reset the password
-@users.route("/reset_password", methods=["GET", "POST"])
+
+@users.route("/settings/password", methods=["POST"])
+@login_required
+@limiter.limit("10/hour")
+def change_password():
+    if current_user.is_demo:
+        flash(DEMO_LOCKED, "warning")
+        return redirect(url_for("users.settings"))
+    pw_form = PasswordForm(prefix="pw")
+    if pw_form.validate_on_submit():
+        if not current_user.check_password(pw_form.current_password.data):
+            flash("Your current password is wrong.", "danger")
+        else:
+            current_user.set_password(pw_form.password.data)
+            db.session.commit()
+            flash("Password changed.", "success")
+        return redirect(url_for("users.settings"))
+    form = ProfileForm(obj=current_user)
+    form.theme.data = current_user.style
+    return render_template("users/settings.html", title="Settings", form=form, pw_form=pw_form), 400
+
+
+# --- userpics -----------------------------------------------------------------
+
+@users.route("/settings/userpics", methods=["GET", "POST"])
+@login_required
+def userpics():
+    form = UserpicForm()
+    if form.validate_on_submit():
+        if current_user.is_demo:
+            flash(DEMO_LOCKED, "warning")
+        elif len(current_user.userpics) >= Userpic.MAX_PER_USER:
+            flash(f"You can have up to {Userpic.MAX_PER_USER} userpics. Delete one first.", "warning")
+        else:
+            try:
+                data = process_userpic(form.picture.data)
+            except ImageError as e:
+                flash(str(e), "danger")
+            else:
+                pic = Userpic(
+                    keyword=form.keyword.data.strip(), data=data, mimetype="image/webp",
+                    is_default=not current_user.userpics,
+                )
+                current_user.userpics.append(pic)
+                db.session.commit()
+                flash("Userpic uploaded.", "success")
+                return redirect(url_for("users.userpics"))
+    return render_template("users/userpics.html", title="Userpics", form=form, max_pics=Userpic.MAX_PER_USER)
+
+
+def _own_userpic(pic_id):
+    pic = db.session.get(Userpic, pic_id)
+    if not pic or pic.user_id != current_user.id:
+        abort(404)
+    return pic
+
+
+@users.route("/settings/userpics/<int:pic_id>/default", methods=["POST"])
+@login_required
+def userpic_default(pic_id):
+    pic = _own_userpic(pic_id)
+    for p in current_user.userpics:
+        p.is_default = p.id == pic.id
+    db.session.commit()
+    flash(f"“{pic.keyword}” is now your default userpic.", "success")
+    return redirect(url_for("users.userpics"))
+
+
+@users.route("/settings/userpics/<int:pic_id>/delete", methods=["POST"])
+@login_required
+def userpic_delete(pic_id):
+    pic = _own_userpic(pic_id)
+    if current_user.is_demo:
+        flash(DEMO_LOCKED, "warning")
+        return redirect(url_for("users.userpics"))
+    was_default = pic.is_default
+    db.session.delete(pic)
+    db.session.flush()
+    if was_default and current_user.userpics:
+        current_user.userpics[0].is_default = True
+    db.session.commit()
+    flash("Userpic deleted.", "success")
+    return redirect(url_for("users.userpics"))
+
+
+# --- password reset -----------------------------------------------------------
+
+@users.route("/reset-password", methods=["GET", "POST"])
+@limiter.limit("5/hour", methods=["POST"])
 def reset_request():
     if current_user.is_authenticated:
         return redirect(url_for("main.home"))
     form = RequestResetForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user:
-            send_reset_email(user)
-        # Optional: use this message to avoid email enumeration
-        flash("If an account with that email exists, a reset link has been sent.", "info")
+        user = db.session.scalar(select(User).where(func.lower(User.email) == form.email.data.strip().lower()))
+        if user and not user.is_demo:
+            try:
+                send_reset_email(user)
+            except Exception:
+                current_app.logger.exception("Could not send reset email")
+        # Same message either way, so nobody can probe which emails have accounts.
+        flash("If that email has an account, a reset link is on its way.", "info")
         return redirect(url_for("users.login"))
-    return render_template("reset_request.html", title="Reset Password", form=form)
+    return render_template("users/reset_request.html", title="Reset password", form=form)
 
 
-# This is where the user resets their password with the token active
-@users.route("/reset_password/<token>", methods = ["GET", "POST"])
+@users.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_token(token):
     if current_user.is_authenticated:
         return redirect(url_for("main.home"))
     user = User.verify_reset_token(token)
     if user is None:
-        flash("That is an invalid or expired token", "warning")
+        flash("That reset link is invalid or has expired.", "warning")
         return redirect(url_for("users.reset_request"))
     form = ResetPasswordForm()
     if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user.password = hashed_password
+        user.set_password(form.password.data)
         db.session.commit()
-        flash("Password updated!","success")
+        flash("Password updated — you can log in now.", "success")
         return redirect(url_for("users.login"))
-    return render_template("reset_token.html", title = "Reset Password", form = form)
+    return render_template("users/reset_token.html", title="Reset password", form=form)
 
 
-@users.route('/set-theme/<theme_name>')
-def set_theme(theme_name):
+# --- theme switcher -------------------------------------------------------------
+
+@users.route("/theme", methods=["POST"])
+def set_theme():
+    theme = request.form.get("theme", "")
+    if theme not in THEMES:
+        abort(400)
     if current_user.is_authenticated:
-        if theme_name != current_user.theme:
-            current_user.theme = theme_name
-            db.session.commit()
-            return jsonify({
-                "message": "Theme updated and saved to your account!",
-                "category": "success"
-            })
-        else:
-            return make_response('', 204)  # No change
+        current_user.theme = theme
+        db.session.commit()
+        message = f"Style switched to {THEMES[theme]}."
     else:
-        cookie_theme = request.cookies.get('theme')
-        if theme_name != cookie_theme:
-            resp = jsonify({
-                "message": "Theme preview applied!",
-                "category": "info"
-            })
-            resp.set_cookie('theme', theme_name, max_age=60*60*24*7)
-            return resp
-        else:
-            return make_response('', 204)  # No change
+        message = f"Previewing {THEMES[theme]} — make a journal to keep it."
+    wants_json = request.accept_mimetypes.best == "application/json"
+    resp = make_response(jsonify(message=message, theme=theme) if wants_json else redirect(
+        safe_next(request.form.get("next")) or url_for("main.home")
+    ))
+    if not wants_json:
+        flash(message, "success")
+    resp.set_cookie("theme", theme, max_age=60 * 60 * 24 * 365, samesite="Lax",
+                    secure=current_app.config.get("SESSION_COOKIE_SECURE", False))
+    return resp
 
 
+# --- old URLs from the previous version ------------------------------------------
+
+@users.route("/account")
+def old_account():
+    return redirect(url_for("users.settings"), 301)
 
 
-
+@users.route("/user/<string:username>")
+def old_user_posts(username):
+    return redirect(url_for("journal.journal", username=username), 301)

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import field with context %}
+{% block page %}
+<main id="content" class="wrap narrow">
+  <h1 class="pagetitle">Settings</h1>
+  {% with active = 'profile' %}{% include "users/_settings_nav.html" %}{% endwith %}
+
+  <form method="post" action="{{ url_for('users.settings') }}" class="box" novalidate>
+    {{ form.hidden_tag() }}
+    <h2 class="box__title">Profile</h2>
+    <div class="editor__grid">
+      {{ field(form.username, autocomplete="username", readonly=current_user.is_demo) }}
+      {{ field(form.display_name) }}
+      {{ field(form.email, autocomplete="email", readonly=current_user.is_demo) }}
+      {{ field(form.location) }}
+      {{ field(form.website, placeholder="https://") }}
+      {{ field(form.theme, hint="Visitors see your journal in this style.") }}
+    </div>
+    {{ field(form.interests) }}
+    {{ field(form.bio, rows=5, hint="Shown on your user info page. Basic HTML works.") }}
+    <button class="btn" type="submit" name="submit" value="1">Save profile</button>
+  </form>
+
+  <form method="post" action="{{ url_for('users.change_password') }}" class="box" novalidate>
+    {{ pw_form.hidden_tag() }}
+    <h2 class="box__title">Password</h2>
+    {% if current_user.is_demo %}
+      <p class="muted">The demo account's password can't be changed.</p>
+    {% else %}
+      <div class="editor__grid">
+        {{ field(pw_form.current_password, autocomplete="current-password") }}
+        <span></span>
+        {{ field(pw_form.password, autocomplete="new-password") }}
+        {{ field(pw_form.confirm_password, autocomplete="new-password") }}
+      </div>
+      <button class="btn" type="submit">Change password</button>
+    {% endif %}
+  </form>
+</main>
+{% endblock %}

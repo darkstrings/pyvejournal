@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import journal_header, journal_sidebar, ljuser, userpic_img with context %}
+{% block content %}
+  {{ journal_header(user, 'profile') }}
+  <section class="box userinfo">
+    <h2 class="box__title">User info</h2>
+    <dl class="infotable">
+      <div><dt>User</dt><dd>{{ ljuser(user) }}{% if user.display_name %} ({{ user.display_name }}){% endif %}</dd></div>
+      {% if user.location %}<div><dt>Location</dt><dd>{{ user.location }}</dd></div>{% endif %}
+      {% if user.website %}<div><dt>Website</dt><dd><a href="{{ user.website }}" rel="nofollow noopener ugc">{{ user.website|replace('https://','')|replace('http://','') }}</a></dd></div>{% endif %}
+      <div><dt>Member since</dt><dd>{{ user.created_at|ljdate }}</dd></div>
+      <div><dt>Journal entries</dt><dd>{{ entry_count }}</dd></div>
+      <div><dt>Style</dt><dd>{{ THEMES[user.style] }}</dd></div>
+    </dl>
+    {% if user.bio %}<h3>Bio</h3><div class="prose">{{ user.bio|comment_html }}</div>{% endif %}
+    {% if user.interest_list() %}
+      <h3>Interests ({{ user.interest_list()|length }})</h3>
+      <p class="interests">{% for i in user.interest_list() %}<span>{{ i }}</span>{% endfor %}</p>
+    {% endif %}
+    <div class="friendcols">
+      <div>
+        <h3>Friends ({{ user.friends|length }})</h3>
+        <ul class="userlist">{% for f in user.friends %}<li>{{ ljuser(f) }}</li>{% else %}<li class="muted">None yet</li>{% endfor %}</ul>
+      </div>
+      <div>
+        <h3>Friend of ({{ user.friend_of|length }})</h3>
+        <ul class="userlist">{% for f in user.friend_of %}<li>{{ ljuser(f) }}</li>{% else %}<li class="muted">None yet</li>{% endfor %}</ul>
+      </div>
+    </div>
+    {% if user.userpics|length > 1 %}
+      <h3>Userpics</h3>
+      <ul class="picgrid">
+        {% for p in user.userpics %}<li>{{ userpic_img(p, alt=p.keyword) }}<span>{{ p.keyword }}</span></li>{% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+{% endblock %}
+{% block sidebar %}{{ journal_sidebar(user, tags) }}{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import field with context %}
+{% block page %}
+<main id="content" class="wrap narrow">
+  <form method="post" class="box editor" novalidate>
+    {{ form.hidden_tag() }}
+    <h1 class="pagetitle">{{ legend }}</h1>
+    {{ field(form.title, autofocus=true, maxlength=100, placeholder="What's on your mind?") }}
+    {{ field(form.content, rows=14, hint="Blank line = new paragraph. HTML like <b>, <i>, <a href>, <ul>, <blockquote> and <img> works. Put <lj-cut> where the “Read more” link should go.") }}
+
+    <div class="editor__grid">
+      {{ field(form.mood, list="moods", placeholder="e.g. nostalgic", autocomplete="off") }}
+      <datalist id="moods">{% for m in MOODS %}<option value="{{ m }}">{% endfor %}</datalist>
+      {{ field(form.music, placeholder="Artist – Song") }}
+      {{ field(form.tags, placeholder="music, life, python") }}
+      {{ field(form.security) }}
+      {% if current_user.userpics %}{{ field(form.userpic_id) }}{% endif %}
+    </div>
+    {{ field(form.comments_disabled) }}
+
+    <div class="editor__actions">
+      <button class="btn btn--big" type="submit">{{ "Save changes" if post else "Post to journal" }}</button>
+      <a class="btn btn--ghost btn--big" href="{{ url_for('posts.post', post_id=post.id) if post else url_for('journal.journal', username=current_user.username) }}">Cancel</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

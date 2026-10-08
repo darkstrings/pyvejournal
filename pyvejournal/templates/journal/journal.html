@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import entry_list, pager, journal_header, journal_sidebar with context %}
+{% block content %}
+  {{ journal_header(user, 'recent') }}
+  {% if tag %}
+    <p class="filterbar">Showing entries tagged <b>{{ tag }}</b> · <a href="{{ url_for('journal.journal', username=user.username) }}">show all</a></p>
+  {% endif %}
+  {% if current_user.is_authenticated and current_user.id == user.id and not posts.items and not tag %}
+    <div class="box empty-cta">
+      <p>Your journal is empty. Every great journal starts with a first entry.</p>
+      <a class="btn" href="{{ url_for('posts.new_post') }}">✎ Write your first entry</a>
+    </div>
+  {% else %}
+    {{ entry_list(posts, show_author=false, empty="No entries you can see here yet.") }}
+  {% endif %}
+  {{ pager(posts, 'journal.journal', username=user.username, tag=tag) }}
+{% endblock %}
+{% block sidebar %}{{ journal_sidebar(user, tags) }}{% endblock %}

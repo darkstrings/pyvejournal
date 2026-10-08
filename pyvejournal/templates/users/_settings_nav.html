@@ -1,0 +1,5 @@
+<nav class="tabs tabs--settings" aria-label="Settings">
+  <a href="{{ url_for('users.settings') }}" {% if active == 'profile' %}aria-current="page"{% endif %}>Profile &amp; style</a>
+  <a href="{{ url_for('users.userpics') }}" {% if active == 'userpics' %}aria-current="page"{% endif %}>Userpics</a>
+  <a href="{{ url_for('journal.profile', username=current_user.username) }}">View my user info →</a>
+</nav>

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block page %}
+<main id="content" class="wrap auth">
+  <section class="box auth__card">
+    {% block card %}{% endblock %}
+  </section>
+  <aside class="auth__aside" aria-hidden="true">
+    <div class="ljcard">
+      <p class="ljcard__date">Friday, March 12th, 2004 · 11:42 pm</p>
+      <p class="ljcard__subject">ok so I made a journal</p>
+      <p class="ljcard__body">everyone has one now so here I am. this is going to be mostly band stuff and complaining about chem homework. comments = love!!</p>
+      <dl class="ljcard__meta"><div><dt>Current mood:</dt><dd>📼 nostalgic</dd></div><div><dt>Current music:</dt><dd>♫ The Postal Service – Such Great Heights</dd></div></dl>
+      <p class="ljcard__foot">12 comments | Leave a comment</p>
+    </div>
+  </aside>
+</main>
+{% endblock %}

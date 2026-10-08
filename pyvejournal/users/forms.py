@@ -1,76 +1,90 @@
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, BooleanField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-from flask_wtf.file import FileField, FileAllowed
 from flask_login import current_user
-from pyvejournal.models import User
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField, FileRequired
+from sqlalchemy import func, select
+from wtforms import BooleanField, PasswordField, SelectField, StringField, SubmitField, TextAreaField
+from wtforms.validators import URL, DataRequired, Email, EqualTo, Length, Optional, Regexp, ValidationError
+
+from ..extensions import db
+from ..models import THEMES, User
+
+USERNAME_RULES = [
+    DataRequired(),
+    Length(min=2, max=20),
+    Regexp(r"^[A-Za-z0-9_]+$", message="Letters, numbers and underscores only."),
+]
 
 
-# REGISTRATION
+def _taken(column, value, exclude_id=None):
+    q = select(User.id).where(func.lower(column) == value.strip().lower())
+    if exclude_id:
+        q = q.where(User.id != exclude_id)
+    return db.session.scalar(q) is not None
+
 
 class RegistrationForm(FlaskForm):
-    username = StringField("Username",
-                           validators=[DataRequired(), Length(min=2, max=20)])
-    email = StringField("Email",validators=[DataRequired(), Email()])
-    password = PasswordField("Password",validators=[DataRequired()])
-    confirm_password = PasswordField("Confirm Password",
-                                     validators=[DataRequired(), EqualTo("password")])
-    submit = SubmitField("Sign Up")
-    def validate_username(self, username):
-        userdupe = User.query.filter_by(username=username.data).first()
-        if userdupe:
-            raise ValidationError("That username is taken. Please choose a different one.")
-        
-    def validate_email(self, email):
-        emaildupe = User.query.filter_by(email=email.data).first()
-        if emaildupe:
-            raise ValidationError("That E-Mail address is taken. Please choose a different one or sign in if you already have an account.")    
+    username = StringField("Username", validators=USERNAME_RULES)
+    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=120)])
+    password = PasswordField("Password", validators=[DataRequired(), Length(min=8, message="At least 8 characters.")])
+    confirm_password = PasswordField("Confirm password", validators=[DataRequired(), EqualTo("password")])
+    submit = SubmitField("Create my journal")
 
-# LOGIN
+    def validate_username(self, field):
+        if _taken(User.username, field.data):
+            raise ValidationError("That username is taken.")
+
+    def validate_email(self, field):
+        if _taken(User.email, field.data):
+            raise ValidationError("That email already has an account. Try logging in.")
+
 
 class LoginForm(FlaskForm):
-    email = StringField("Email",validators=[DataRequired(), Email()])
-    password = PasswordField("Password",validators=[DataRequired()])
-    remember = BooleanField("Remember Me")
-    submit = SubmitField("Log In")
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    remember = BooleanField("Remember me")
+    submit = SubmitField("Log in")
 
-# UPDATE
 
-class UpdateAccountForm(FlaskForm):
-    username = StringField("Username",
-                           validators=[DataRequired(), Length(min=2, max=20)])
-    email = StringField("Email",validators=[DataRequired(), Email()])
-    picture = FileField("Update Profile Picture", validators =[FileAllowed(["jpg", "png"])])
-    submit = SubmitField("Update")
+class ProfileForm(FlaskForm):
+    username = StringField("Username", validators=USERNAME_RULES)
+    display_name = StringField("Display name", validators=[Optional(), Length(max=50)])
+    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=120)])
+    location = StringField("Location", validators=[Optional(), Length(max=80)])
+    website = StringField("Website", validators=[Optional(), URL(), Length(max=200)])
+    interests = StringField("Interests", validators=[Optional(), Length(max=400)],
+                            description="Comma-separated, e.g. guitars, python, 3d printing")
+    bio = TextAreaField("Bio", validators=[Optional(), Length(max=2000)])
+    theme = SelectField("Journal style", choices=list(THEMES.items()))
+    submit = SubmitField("Save profile")
 
-    def validate_username(self, username):
-        if username.data != current_user.username:
-            user_dupe = User.query.filter_by(username=username.data).first()
-            if user_dupe:
-                raise ValidationError("That username is taken. Please choose a different one.")
-        
-    def validate_email(self, email):
-        if email.data != current_user.email:
-            email_dupe = User.query.filter_by(email=email.data).first()
-            if email_dupe:
-                raise ValidationError("That E-mail address is taken. Please choose a different one or sign in if you already have an account.")  
-# do an else for the instance where the username or email matches the one they already have and alert with a flash message without clearing the fields.
+    def validate_username(self, field):
+        if _taken(User.username, field.data, current_user.id):
+            raise ValidationError("That username is taken.")
+
+    def validate_email(self, field):
+        if _taken(User.email, field.data, current_user.id):
+            raise ValidationError("That email is used by another account.")
+
+
+class PasswordForm(FlaskForm):
+    current_password = PasswordField("Current password", validators=[DataRequired()])
+    password = PasswordField("New password", validators=[DataRequired(), Length(min=8, message="At least 8 characters.")])
+    confirm_password = PasswordField("Confirm new password", validators=[DataRequired(), EqualTo("password")])
+    submit = SubmitField("Change password")
+
+
+class UserpicForm(FlaskForm):
+    picture = FileField("Image", validators=[FileRequired(), FileAllowed(["jpg", "jpeg", "png", "gif", "webp"], "Images only.")])
+    keyword = StringField("Keyword", validators=[DataRequired(), Length(max=40)], description="e.g. happy, guitar, sleepy")
+    submit = SubmitField("Upload userpic")
+
 
 class RequestResetForm(FlaskForm):
-    email = StringField("Email",validators=[DataRequired(), Email()])
-    submit = SubmitField("Request Password Reset")
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    submit = SubmitField("Send reset link")
 
-    def validate_email(self, email):
-        normalized_email = email.data.strip().lower()
-        user = User.query.filter_by(email=normalized_email).first()
-        print("Checking email:", normalized_email)
-        print("User found:", user)
-        if user is None:
-            raise ValidationError("There is no account with that E-Mail. You must register first")
-   
 
 class ResetPasswordForm(FlaskForm):
-    password = PasswordField("Password",validators=[DataRequired()])
-    confirm_password = PasswordField("Confirm Password",
-                                     validators=[DataRequired(), EqualTo("password")])
-    submit = SubmitField("Reset Password")
+    password = PasswordField("New password", validators=[DataRequired(), Length(min=8, message="At least 8 characters.")])
+    confirm_password = PasswordField("Confirm new password", validators=[DataRequired(), EqualTo("password")])
+    submit = SubmitField("Reset password")

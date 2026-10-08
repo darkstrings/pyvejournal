@@ -1,7 +1,14 @@
 services:
   - type: web
     name: pyvejournal
-    env: python
+    runtime: python
+    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn wsgi:app
-    pythonVersion: 3.11
+    startCommand: flask --app wsgi db upgrade && gunicorn wsgi:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false

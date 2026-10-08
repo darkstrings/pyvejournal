@@ -1,0 +1,97 @@
+{% from "partials/macros.html" import userpic_img with context %}
+{% set page_theme = journal_owner.style if journal_owner is defined and journal_owner else viewer_theme %}
+<!doctype html>
+<html lang="en" data-theme="{{ page_theme }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="description" content="{% block description %}PyveJournal — a cozy, LiveJournal-inspired place to write. Moods, music, friends-only entries and comments.{% endblock %}">
+  <title>{% if title %}{{ title }} · {% endif %}PyveJournal</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+
+  <header class="sitebar">
+    <div class="wrap sitebar__inner">
+      <a class="logo" href="{{ url_for('main.home') }}" aria-label="PyveJournal home">
+        <span class="logo__mark" aria-hidden="true">✎</span>
+        <span class="logo__text">Pyve<span>Journal</span></span>
+      </a>
+
+      <button class="navtoggle" type="button" aria-expanded="false" aria-controls="sitenav" data-navtoggle>
+        <span aria-hidden="true">☰</span><span class="sr-only">Menu</span>
+      </button>
+
+      <nav id="sitenav" class="sitenav" aria-label="Main">
+        <ul>
+          <li><a href="{{ url_for('main.home') }}">Latest</a></li>
+          {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('journal.friends_page', username=current_user.username) }}">Friends</a></li>
+            <li><a href="{{ url_for('journal.journal', username=current_user.username) }}">My journal</a></li>
+            <li><a class="sitenav__cta" href="{{ url_for('posts.new_post') }}">✎ Post</a></li>
+            <li><a href="{{ url_for('users.settings') }}">Settings</a></li>
+            <li>
+              <form action="{{ url_for('users.logout') }}" method="post" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="linkbtn" type="submit">Log out</button>
+              </form>
+            </li>
+          {% else %}
+            <li><a href="{{ url_for('main.about') }}">About</a></li>
+            <li><a href="{{ url_for('users.login') }}">Log in</a></li>
+            <li><a class="sitenav__cta" href="{{ url_for('users.register') }}">Create a journal</a></li>
+          {% endif %}
+          <li>
+            <form action="{{ url_for('users.set_theme') }}" method="post" class="stylepick" data-stylepick>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="next" value="{{ request.full_path }}">
+              <label for="style-select" class="stylepick__label">Style</label>
+              <select id="style-select" name="theme">
+                {% for key, label in THEMES.items() %}
+                  <option value="{{ key }}" {% if key == viewer_theme %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <noscript><button type="submit">Go</button></noscript>
+            </form>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  {% if current_user.is_authenticated and current_user.is_demo %}
+    <p class="demobar">You're using the shared demo journal — feel free to post and comment. Demo entries are cleaned up after a couple of hours.</p>
+  {% endif %}
+
+  <div class="wrap" id="flashes" aria-live="polite">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash--{{ category }}" role="status">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  {% block page %}
+  <div class="wrap layout">
+    <main id="content" class="layout__main">
+      {% block content %}{% endblock %}
+    </main>
+    <aside class="layout__side">
+      {% block sidebar %}{% endblock %}
+    </aside>
+  </div>
+  {% endblock %}
+
+  <footer class="sitefooter">
+    <div class="wrap">
+      <p>PyveJournal · a love letter to 2000s journaling, built with Python &amp; Flask by
+        <a href="https://github.com/darkstrings" rel="noopener">Lucien Gaydos</a>.</p>
+      <p><a href="{{ url_for('main.about') }}">About</a> · <a href="{{ url_for('main.home') }}">Latest entries</a></p>
+    </div>
+  </footer>
+</body>
+</html>

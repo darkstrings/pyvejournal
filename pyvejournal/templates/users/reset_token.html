@@ -1,0 +1,11 @@
+{% extends "users/_auth.html" %}
+{% from "partials/macros.html" import field with context %}
+{% block card %}
+  <h1 class="pagetitle">Choose a new password</h1>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.password, autocomplete="new-password", autofocus=true) }}
+    {{ field(form.confirm_password, autocomplete="new-password") }}
+    <button class="btn btn--big btn--block" type="submit">Reset password</button>
+  </form>
+{% endblock %}

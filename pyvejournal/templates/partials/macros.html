@@ -1,0 +1,176 @@
+{% macro userpic_img(pic, alt="", size=100, cls="userpic") -%}
+  {% if pic %}
+    <img class="{{ cls }}" src="{{ url_for('main.userpic', pic_id=pic.id) }}" alt="{{ alt }}" width="{{ size }}" height="{{ size }}" loading="lazy">
+  {% else %}
+    <img class="{{ cls }}" src="{{ url_for('static', filename='img/default-userpic.webp') }}" alt="{{ alt }}" width="{{ size }}" height="{{ size }}" loading="lazy">
+  {% endif %}
+{%- endmacro %}
+
+{% macro ljuser(user) -%}
+  <span class="ljuser"><a href="{{ url_for('journal.profile', username=user.username) }}" class="ljuser__icon" aria-label="{{ user.username }}'s user info">👤</a><a href="{{ url_for('journal.journal', username=user.username) }}" class="ljuser__name">{{ user.username }}</a></span>
+{%- endmacro %}
+
+{% macro security_badge(post) -%}
+  {% if post.security == "friends" %}
+    <span class="security security--friends" title="Friends only">🔒<span class="sr-only">Friends only</span></span>
+  {% elif post.security == "private" %}
+    <span class="security security--private" title="Private — only you can see this">🔐<span class="sr-only">Private</span></span>
+  {% endif %}
+{%- endmacro %}
+
+{% macro entry(post, full=false, show_author=true) -%}
+  {% set url = url_for('posts.post', post_id=post.id) %}
+  <article class="entry" id="entry-{{ post.id }}">
+    <header class="entry__head">
+      {% if show_author %}
+        <a class="entry__pic" href="{{ url_for('journal.journal', username=post.author.username) }}">
+          {{ userpic_img(post.display_userpic, alt=post.author.username ~ "'s userpic") }}
+        </a>
+      {% endif %}
+      <div class="entry__headtext">
+        <p class="entry__date">
+          <time datetime="{{ post.date_posted.isoformat() }}">{{ post.date_posted|ljdate }} · {{ post.date_posted|ljtime }}</time>
+        </p>
+        <h2 class="entry__subject">
+          {{ security_badge(post) }}
+          {% if full %}{{ post.title }}{% else %}<a href="{{ url }}">{{ post.title }}</a>{% endif %}
+        </h2>
+        {% if show_author %}<p class="entry__byline">{{ ljuser(post.author) }}</p>{% endif %}
+      </div>
+    </header>
+
+    {% if post.mood or post.music %}
+      <dl class="entry__meta">
+        {% if post.mood %}
+          <div><dt>Current mood:</dt><dd><span aria-hidden="true">{{ post.mood|mood_emoji }}</span> {{ post.mood }}</dd></div>
+        {% endif %}
+        {% if post.music %}
+          <div><dt>Current music:</dt><dd><span aria-hidden="true">♫</span> {{ post.music }}</dd></div>
+        {% endif %}
+      </dl>
+    {% endif %}
+
+    <div class="entry__body">
+      {% if full %}{{ post.content|entry }}{% else %}{{ post.content|entry(url=url) }}{% endif %}
+    </div>
+
+    {% if post.tags %}
+      <p class="entry__tags">Tags:
+        {% for t in post.tags %}<a href="{{ url_for('journal.journal', username=post.author.username, tag=t.name) }}">{{ t.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
+      </p>
+    {% endif %}
+
+    <footer class="entry__foot">
+      {% if not post.comments_disabled %}
+        <a href="{{ url }}#comments">{{ post.comment_count }} comment{{ '' if post.comment_count == 1 else 's' }}</a>
+        <span aria-hidden="true">|</span>
+        <a href="{{ url }}#comment-form">Leave a comment</a>
+      {% else %}
+        <span>Comments disabled</span>
+      {% endif %}
+      {% if current_user.is_authenticated and post.user_id == current_user.id %}
+        <span aria-hidden="true">|</span>
+        <a href="{{ url_for('posts.edit_post', post_id=post.id) }}">Edit</a>
+      {% endif %}
+      {% if post.updated_at %}<span class="entry__edited">edited {{ post.updated_at|ljdate }}</span>{% endif %}
+    </footer>
+  </article>
+{%- endmacro %}
+
+{% macro entry_list(posts, show_author=true, empty="No entries here yet.") -%}
+  {% set ns = namespace(day=None) %}
+  {% for post in posts.items %}
+    {% set day = post.date_posted.date() %}
+    {% if day != ns.day %}
+      <h3 class="dayhead">{{ post.date_posted|ljdate }}</h3>
+      {% set ns.day = day %}
+    {% endif %}
+    {{ entry(post, show_author=show_author) }}
+  {% else %}
+    <p class="empty">{{ empty }}</p>
+  {% endfor %}
+{%- endmacro %}
+
+{% macro pager(pagination, endpoint) -%}
+  {% if pagination.pages > 1 %}
+    <nav class="pager" aria-label="Pages">
+      {% if pagination.has_prev %}
+        <a href="{{ url_for(endpoint, page=pagination.prev_num, **kwargs) }}" rel="prev">« Newer entries</a>
+      {% else %}<span></span>{% endif %}
+      <span class="pager__count">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+      {% if pagination.has_next %}
+        <a href="{{ url_for(endpoint, page=pagination.next_num, **kwargs) }}" rel="next">Older entries »</a>
+      {% else %}<span></span>{% endif %}
+    </nav>
+  {% endif %}
+{%- endmacro %}
+
+{% macro field(f, hint=none) -%}
+  <div class="field{% if f.errors %} field--error{% endif %}">
+    {% if f.type == "BooleanField" %}
+      <label class="check">{{ f(**kwargs) }} {{ f.label.text }}</label>
+    {% else %}
+      {{ f.label(class="field__label") }}
+      {{ f(class="field__input", **kwargs) }}
+    {% endif %}
+    {% if f.errors %}
+      <p class="field__error">{{ f.errors|join(" ") }}</p>
+    {% elif hint or f.description %}
+      <p class="field__hint">{{ hint or f.description }}</p>
+    {% endif %}
+  </div>
+{%- endmacro %}
+
+{% macro journal_header(user, active) -%}
+  <section class="journalhead">
+    <div class="journalhead__pic">{{ userpic_img(user.default_userpic, alt=user.username ~ "'s userpic") }}</div>
+    <div class="journalhead__text">
+      <h1>{{ user.name }}'s Journal</h1>
+      <p class="journalhead__user">{{ ljuser(user) }}{% if user.location %} · {{ user.location }}{% endif %}</p>
+      <nav class="tabs" aria-label="Journal">
+        <a href="{{ url_for('journal.journal', username=user.username) }}" {% if active == 'recent' %}aria-current="page"{% endif %}>Recent entries</a>
+        <a href="{{ url_for('journal.friends_page', username=user.username) }}" {% if active == 'friends' %}aria-current="page"{% endif %}>Friends</a>
+        <a href="{{ url_for('journal.profile', username=user.username) }}" {% if active == 'profile' %}aria-current="page"{% endif %}>User info</a>
+      </nav>
+    </div>
+  </section>
+{%- endmacro %}
+
+{% macro friend_button(user) -%}
+  {% if current_user.is_authenticated and current_user.id != user.id %}
+    <form action="{{ url_for('journal.toggle_friend', username=user.username) }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ request.path }}">
+      {% if user in current_user.friends %}
+        <button class="btn btn--ghost btn--block" type="submit">✓ Friend — remove</button>
+      {% else %}
+        <button class="btn btn--block" type="submit">+ Add friend</button>
+      {% endif %}
+    </form>
+  {% elif not current_user.is_authenticated %}
+    <a class="btn btn--block" href="{{ url_for('users.login', next=request.path) }}">+ Add friend</a>
+  {% endif %}
+{%- endmacro %}
+
+{% macro journal_sidebar(user, tags=none) -%}
+  <section class="box">
+    <h2 class="box__title">About {{ user.username }}</h2>
+    {% if user.bio %}<p class="box__text">{{ user.bio|truncate(220) }}</p>{% endif %}
+    <ul class="statlist">
+      {% set nf = user.friends|length %}<li><b>{{ nf }}</b> friend{{ '' if nf == 1 else 's' }}</li>
+      <li><b>{{ user.friend_of|length }}</b> friend of</li>
+      <li>Since {{ user.created_at.strftime('%B %Y') }}</li>
+    </ul>
+    {{ friend_button(user) }}
+  </section>
+  {% if tags %}
+    <section class="box">
+      <h2 class="box__title">Tags</h2>
+      <ul class="taglist">
+        {% for name, count in tags %}
+          <li><a href="{{ url_for('journal.journal', username=user.username, tag=name) }}">{{ name }}</a> <span>{{ count }}</span></li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+{%- endmacro %}

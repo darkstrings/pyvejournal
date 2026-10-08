@@ -1,0 +1,20 @@
+{% extends "users/_auth.html" %}
+{% from "partials/macros.html" import field with context %}
+{% block card %}
+  <h1 class="pagetitle">Log in</h1>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.email, autocomplete="email", autofocus=true) }}
+    {{ field(form.password, autocomplete="current-password") }}
+    {{ field(form.remember) }}
+    <button class="btn btn--big btn--block" type="submit">Log in</button>
+  </form>
+  <p class="auth__links"><a href="{{ url_for('users.reset_request') }}">Forgot your password?</a></p>
+  <p class="auth__links">New here? <a href="{{ url_for('users.register') }}">Create a journal</a></p>
+  {% if demo_enabled %}
+    <form action="{{ url_for('users.demo_login') }}" method="post" class="auth__demo">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn--ghost btn--block" type="submit">Just looking? Try the demo journal</button>
+    </form>
+  {% endif %}
+{% endblock %}

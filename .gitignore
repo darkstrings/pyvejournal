@@ -1,37 +1,27 @@
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.env
-.env
+*.py[cod]
 venv/
+.venv/
+.pytest_cache/
+
+# Secrets & local data
+.env
+*.env
+!.env.example
 instance/
-*.sqlite3
-*.code-workspace
-
-# Flask
-*.log
 *.db
+*.sqlite3
 *.bak
+*.log
 
-# VS Code
+# Editors / OS
 .vscode/
-
-# OS
+*.code-workspace
 .DS_Store
 Thumbs.db
 
-# Misc
+# Personal scratch files
 notes.py
 init_db.py
-run.py
 view_db.py
-.prettierignore
-
-
-# Compiled/static assets
-static/css/*.map
-static/js/*.map
-__pycache__/
-*.py[cod]

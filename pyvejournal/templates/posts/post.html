@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import entry, userpic_img, ljuser, journal_sidebar, field with context %}
+{% block description %}{{ post.content|excerpt }}{% endblock %}
+
+{% macro comment_thread(c, depth=0) -%}
+  <li class="comment" id="t{{ c.id }}">
+    <article class="comment__box{% if c.is_deleted %} comment__box--deleted{% endif %}">
+      {% if c.is_deleted %}
+        <p class="comment__deleted">(Deleted comment)</p>
+      {% else %}
+        <header class="comment__head">
+          {{ userpic_img(c.author.default_userpic, alt="", size=48, cls="userpic userpic--xs") }}
+          <div>
+            <p class="comment__who">{{ ljuser(c.author) }}{% if c.author.id == post.user_id %} <span class="pill">author</span>{% endif %}</p>
+            <p class="comment__when"><a href="#t{{ c.id }}">{{ c.created_at|ljdate }} · {{ c.created_at|ljtime }}</a></p>
+          </div>
+        </header>
+        <div class="comment__body">{{ c.body|comment_html }}</div>
+        <footer class="comment__foot">
+          {% if current_user.is_authenticated and not post.comments_disabled %}
+            <button type="button" class="linkbtn" data-reply="{{ c.id }}" data-reply-to="{{ c.author.username }}">Reply</button>
+          {% endif %}
+          {% if current_user.is_authenticated and current_user.id in (c.user_id, post.user_id) %}
+            <form action="{{ url_for('posts.delete_comment', comment_id=c.id) }}" method="post" class="inline" data-confirm="Delete this comment?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="linkbtn linkbtn--danger">Delete</button>
+            </form>
+          {% endif %}
+        </footer>
+      {% endif %}
+    </article>
+    {% if c.replies %}
+      <ul class="comments__replies">
+        {% for r in c.replies %}{{ comment_thread(r, depth + 1) }}{% endfor %}
+      </ul>
+    {% endif %}
+  </li>
+{%- endmacro %}
+
+{% block content %}
+  {{ entry(post, full=true) }}
+
+  {% if current_user.is_authenticated and current_user.id == post.user_id %}
+    <div class="ownerbar">
+      <a class="btn btn--ghost" href="{{ url_for('posts.edit_post', post_id=post.id) }}">Edit entry</a>
+      <form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="post" class="inline" data-confirm="Delete “{{ post.title }}”? This can't be undone.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn--danger">Delete entry</button>
+      </form>
+    </div>
+  {% endif %}
+
+  <section class="comments" id="comments" aria-labelledby="comments-title">
+    <h2 id="comments-title" class="comments__title">{{ post.comment_count }} comment{{ '' if post.comment_count == 1 else 's' }}</h2>
+    {% if comments %}
+      <ul class="comments__list">{% for c in comments %}{{ comment_thread(c) }}{% endfor %}</ul>
+    {% endif %}
+
+    {% if post.comments_disabled %}
+      <p class="muted">Comments are turned off for this entry.</p>
+    {% elif current_user.is_authenticated %}
+      <form method="post" action="{{ url_for('posts.add_comment', post_id=post.id) }}" class="box commentform" id="comment-form">
+        {{ form.hidden_tag() }}
+        <p class="commentform__replying" hidden>Replying to <b data-reply-name></b> · <button type="button" class="linkbtn" data-reply-cancel>cancel</button></p>
+        <div class="commentform__row">
+          {{ userpic_img(current_user.default_userpic, alt="", size=48, cls="userpic userpic--xs") }}
+          {{ field(form.body, hint="Basic HTML like <b>, <i> and links works.", rows=4, placeholder="Say something nice…") }}
+        </div>
+        <button class="btn" type="submit">Post comment</button>
+      </form>
+    {% else %}
+      <p class="box"><a href="{{ url_for('users.login', next=request.path) }}">Log in</a> or <a href="{{ url_for('users.register') }}">create a journal</a> to leave a comment.</p>
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block sidebar %}{{ journal_sidebar(post.author) }}{% endblock %}

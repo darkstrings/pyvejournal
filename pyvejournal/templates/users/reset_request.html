@@ -1,0 +1,12 @@
+{% extends "users/_auth.html" %}
+{% from "partials/macros.html" import field with context %}
+{% block card %}
+  <h1 class="pagetitle">Reset your password</h1>
+  <p class="muted">Enter your email and we'll send you a link to choose a new password.</p>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.email, autocomplete="email", autofocus=true) }}
+    <button class="btn btn--big btn--block" type="submit">Send reset link</button>
+  </form>
+  <p class="auth__links"><a href="{{ url_for('users.login') }}">Back to log in</a></p>
+{% endblock %}

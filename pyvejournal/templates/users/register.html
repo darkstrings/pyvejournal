@@ -1,0 +1,15 @@
+{% extends "users/_auth.html" %}
+{% from "partials/macros.html" import field with context %}
+{% block card %}
+  <h1 class="pagetitle">Create a journal</h1>
+  <p class="muted">Free, no ads, and your entries can be as public or private as you like.</p>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.username, autocomplete="username", autofocus=true, hint="Your journal lives at /journal/your-name. Letters, numbers and _ only.") }}
+    {{ field(form.email, autocomplete="email") }}
+    {{ field(form.password, autocomplete="new-password", hint="At least 8 characters.") }}
+    {{ field(form.confirm_password, autocomplete="new-password") }}
+    <button class="btn btn--big btn--block" type="submit">Create my journal</button>
+  </form>
+  <p class="auth__links">Already have one? <a href="{{ url_for('users.login') }}">Log in</a></p>
+{% endblock %}

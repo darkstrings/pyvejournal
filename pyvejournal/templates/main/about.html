@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+  <article class="box prose">
+    <h1>About PyveJournal</h1>
+    <p>PyveJournal is a love letter to the early-2000s blogging scene — LiveJournal, mixtape CDs and away messages —
+      rebuilt with modern Python.</p>
+    <h2>What you can do</h2>
+    <ul>
+      <li><b>Write entries</b> with a little safe HTML (bold, links, lists, quotes…). Blank lines become paragraphs.</li>
+      <li><b>Set your current mood and music</b> on every post, just like the old days.</li>
+      <li><b>Hide the long part</b> of an entry with <code>&lt;lj-cut&gt;</code> — friends see a “Read more” link.</li>
+      <li><b>Choose who can read</b> each entry: public, friends only, or private.</li>
+      <li><b>Add friends</b> to build your friends page, and let them read your friends-only entries.</li>
+      <li><b>Talk in threaded comments</b>, pick up to six <b>userpics</b>, and give your journal a <b>style</b>.</li>
+    </ul>
+    <h2>Under the hood</h2>
+    <p>Flask 3 · SQLAlchemy 2 · Alembic migrations · Flask-Login · WTForms with CSRF protection · bcrypt password hashing ·
+      rate limiting · HTML sanitizing with nh3 · Pillow for userpics · PostgreSQL in production · pytest.</p>
+    <p>Built by <a href="https://github.com/darkstrings" rel="noopener">Lucien Gaydos</a>.</p>
+  </article>
+{% endblock %}
+{% block page %}<div class="wrap narrow"><main id="content">{{ self.content() }}</main></div>{% endblock %}

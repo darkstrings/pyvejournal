@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import entry_list, pager, userpic_img, ljuser with context %}
+{% block content %}
+  {% if not current_user.is_authenticated and posts.page == 1 %}
+    <section class="hero">
+      <p class="hero__eyebrow">Est. 2025 · Spiritually 2004</p>
+      <h1 class="hero__title">Your corner of the internet, with a <em>mood</em> and a <em>soundtrack</em>.</h1>
+      <p class="hero__text">PyveJournal is a little homage to LiveJournal: write entries, set your current mood and music,
+        keep some posts friends-only, collect comments, and pick a style for your journal.</p>
+      <div class="hero__actions">
+        <a class="btn btn--big" href="{{ url_for('users.register') }}">Create your journal</a>
+        {% if demo_enabled %}
+          <form action="{{ url_for('users.demo_login') }}" method="post" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn--big btn--ghost" type="submit">Try the demo</button>
+          </form>
+        {% endif %}
+      </div>
+    </section>
+  {% endif %}
+
+  <h1 class="pagetitle">Latest entries</h1>
+  {{ entry_list(posts, empty="Nobody has posted yet. Be the first!") }}
+  {{ pager(posts, 'main.home') }}
+{% endblock %}
+
+{% block sidebar %}
+  <section class="box">
+    {% if current_user.is_authenticated %}
+      <div class="welcome">
+        {{ userpic_img(current_user.default_userpic, alt="", size=64, cls="userpic userpic--sm") }}
+        <div>
+          <h2 class="box__title">Hey, {{ current_user.name }}!</h2>
+          <p class="box__text"><a href="{{ url_for('posts.new_post') }}">Write an entry</a> · <a href="{{ url_for('journal.friends_page', username=current_user.username) }}">Read your friends</a></p>
+        </div>
+      </div>
+    {% else %}
+      <h2 class="box__title">Welcome, guest!</h2>
+      <p class="box__text"><a href="{{ url_for('users.login') }}">Log in</a> or <a href="{{ url_for('users.register') }}">create a journal</a> to post, comment and add friends.</p>
+    {% endif %}
+    <ul class="statlist">
+      <li><b>{{ stats.journals }}</b> journals</li>
+      <li><b>{{ stats.entries }}</b> entries</li>
+    </ul>
+  </section>
+
+  {% if newest_users %}
+  <section class="box">
+    <h2 class="box__title">Newest journals</h2>
+    <ul class="userlist">
+      {% for u in newest_users %}
+        <li>{{ ljuser(u) }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if popular_tags %}
+  <section class="box">
+    <h2 class="box__title">Popular tags</h2>
+    <ul class="tagcloud">
+      {% for name, n in popular_tags %}
+        <li><a href="{{ url_for('main.tag', name=name) }}" class="w{{ [n, 5]|min }}">{{ name }}</a></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+{% endblock %}

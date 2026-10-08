@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import field, userpic_img with context %}
+{% block page %}
+<main id="content" class="wrap narrow">
+  <h1 class="pagetitle">Settings</h1>
+  {% with active = 'userpics' %}{% include "users/_settings_nav.html" %}{% endwith %}
+
+  <section class="box">
+    <h2 class="box__title">Your userpics ({{ current_user.userpics|length }} / {{ max_pics }})</h2>
+    <p class="muted">Pick a different picture for each entry — one for happy days, one for grumpy ones. Images are cropped to 100×100.</p>
+    {% if current_user.userpics %}
+      <ul class="picgrid picgrid--manage">
+        {% for p in current_user.userpics %}
+          <li class="{% if p.is_default %}is-default{% endif %}">
+            {{ userpic_img(p, alt=p.keyword) }}
+            <span class="picgrid__kw">{{ p.keyword }}</span>
+            {% if p.is_default %}
+              <span class="pill">default</span>
+            {% else %}
+              <form action="{{ url_for('users.userpic_default', pic_id=p.id) }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="linkbtn" type="submit">Make default</button>
+              </form>
+            {% endif %}
+            <form action="{{ url_for('users.userpic_delete', pic_id=p.id) }}" method="post" data-confirm="Delete the “{{ p.keyword }}” userpic?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="linkbtn linkbtn--danger" type="submit">Delete</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>You don't have any userpics yet — your entries show a placeholder.</p>
+    {% endif %}
+  </section>
+
+  {% if current_user.userpics|length < max_pics and not current_user.is_demo %}
+  <form method="post" enctype="multipart/form-data" class="box" novalidate>
+    {{ form.hidden_tag() }}
+    <h2 class="box__title">Upload a userpic</h2>
+    <div class="editor__grid">
+      {{ field(form.picture, accept="image/png,image/jpeg,image/gif,image/webp", hint="JPG, PNG, GIF or WebP, up to 3 MB.") }}
+      {{ field(form.keyword) }}
+    </div>
+    <button class="btn" type="submit">Upload</button>
+  </form>
+  {% endif %}
+</main>
+{% endblock %}

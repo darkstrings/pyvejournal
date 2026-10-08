@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import entry_list, pager, journal_header, journal_sidebar, ljuser with context %}
+{% block content %}
+  {{ journal_header(user, 'friends') }}
+  {% if not user.friends %}
+    <div class="box empty-cta">
+      {% if current_user.is_authenticated and current_user.id == user.id %}
+        <p>This is your friends page: entries from everyone you add as a friend show up here.
+          Find someone on the <a href="{{ url_for('main.home') }}">latest entries</a> page and hit <b>+ Add friend</b>.</p>
+      {% else %}
+        <p>{{ user.username }} hasn't added any friends yet.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+  {{ entry_list(posts, empty="Nothing to read yet.") }}
+  {{ pager(posts, 'journal.friends_page', username=user.username) }}
+{% endblock %}
+{% block sidebar %}
+  {{ journal_sidebar(user) }}
+  {% if user.friends %}
+    <section class="box">
+      <h2 class="box__title">Friends ({{ user.friends|length }})</h2>
+      <ul class="userlist">{% for f in user.friends %}<li>{{ ljuser(f) }}</li>{% endfor %}</ul>
+    </section>
+  {% endif %}
+{% endblock %}
